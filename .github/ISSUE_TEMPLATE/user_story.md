@@ -1,4 +1,3 @@
-
 ---
 name: Historia de Usuario
 about: Registrar una funcionalidad desde el punto de vista del usuario
