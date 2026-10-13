@@ -53,3 +53,47 @@ El consumo de infraestructura se supervisa y factura en tiempo real en base al u
 - `Auditor:` Hipotéticamente sería una empresa auditora ficticia que nos revisaría la seguridad de la web, la protección de los datos y el cumplimiento de los requisitos.
   
 - `Operador:` Las redes de comunicaciones que conectan a los clientes con los datacenters. Ej: Movistar, Vodafone, Telefónica, etc.
+
+## Diagrama de Arquitectura
+Se seguirá una arquitectura serverless basada en microservicios, que permitirá reducir la gestión de la infraestructura, facilitar la escalabilidad y la elasticidad de la aplicación, favorecer el desacoplamiento de sus componentes y ajustar los costes al uso de los servicios.  
+
+Se hará uso de los servicios de AWS para desplegar la aplicación en la nube. El navegador se comunicará con CloudFront, que distribuirá el contenido de la página web almacenado en S3, un servicio de almacenamiento de objetos. Asimismo, CloudFront actuará como punto de entrada para las peticiones a la API, redirigiéndolas a API Gateway, que se encargará de encaminarlas a los microservicios correspondientes mediante la configuración de rutas e integraciones. CloudFront permitirá aplicar políticas de caché para mejorar el rendimiento, especialmente en la distribución de contenido estático.  
+
+Los microservicios se implementarán mediante funciones AWS Lambda y se comunicarán con la base de datos para consultar y almacenar la información necesaria. Adicionalmente, el microservicio de Juego se comunicará con la API externa de OpenTDB para obtener las preguntas del Trivial.  
+
+La base de datos será DynamoDB, un servicio de base de datos NoSQL gestionado por AWS. Se ha optado por esta tecnología por su integración con el ecosistema de AWS, su capacidad de escalado y su modelo de facturación, que puede resultar económico para una aplicación de este tamaño si se diseña adecuadamente.  
+
+![Diagrama de Arquitectura](./img/hito1/DiagramaDeArquitectura.png)
+
+## Especificación de la API REST
+
+A continuación, se expone una documentación sintética de los endpoints principales organizados por microservicios.
+
+<ins>Login</ins>
+
+| Método | Ruta | Payload JSON | Descripción |
+| ---    | ---  |     ---      |   ---       |
+| POST   | /auth/register | username, email, password | Registrar una nueva cuenta |
+| POST   | /auth/login    | username o email, password | Iniciar sesión |
+
+<ins>Perfil</ins>
+| Método | Ruta | Payload JSON | Descripción |
+| ---    | ---  |     ---      |   ---       |
+| GET    | /profile/{id} | - | Consultar los datos de una cuenta |
+| PATCH  | /profile/{id} | username, email, password | Cambiar los datos de una cuenta |
+
+<ins>Juego</ins>
+| Método | Ruta | Payload JSON | Descripción |
+| ---    | ---  |     ---      |   ---       |
+| POST   | /games | amount, category, difficulty, type | Crea un nuevo juego |
+| POST   | /games/{game_id}/{round_num} | answer, category, difficulty, type, time | Guarda los datos de una respuesta |
+
+<ins>Estadísticas</ins>
+| Método | Ruta | Payload JSON | Descripción |
+| ---    | ---  |     ---      |   ---       |
+| GET    | /statistics/{id} | difficulty, category | Consultar las estadísticas de un perfil, con filtros opcionales |
+
+
+
+
+
