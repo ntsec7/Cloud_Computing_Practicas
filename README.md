@@ -81,6 +81,7 @@ A continuación, se expone una documentación sintética de los endpoints princi
 | ---    | ---  |     ---      |   ---       |
 | GET    | /profile/{id} | - | Consultar los datos de una cuenta |
 | PATCH  | /profile/{id} | username, email, password | Cambiar los datos de una cuenta |
+| DELETE | /profile/{id} | - | Elimina la cuenta de un usuario |
 
 <ins>Juego</ins>
 | Método | Ruta | Payload JSON | Descripción |
