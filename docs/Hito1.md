@@ -36,7 +36,7 @@ Los microservicios se implementarán mediante funciones AWS Lambda y se comunica
 
 La base de datos será DynamoDB, un servicio de base de datos NoSQL gestionado por AWS. Se ha optado por esta tecnología por su integración con el ecosistema de AWS, su capacidad de escalado y su modelo de facturación, que puede resultar económico para una aplicación de este tamaño si se diseña adecuadamente.  
 
-![Diagrama de Arquitectura](./img/hito1/DiagramaDeArquitectura.png)
+![Diagrama de Arquitectura](../img/hito1/DiagramaDeArquitectura.png)
 
 ## Especificación de la API REST
 
