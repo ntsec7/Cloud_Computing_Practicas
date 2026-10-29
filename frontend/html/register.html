@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trivia Cloud - Registro</title>
+
+  <!-- Favicon -->
+  <link rel="shortcut icon" type="image/png" href="../assets/logo.png?v=1">
+
+  <!-- Estilos CSS -->
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/login.css">
+
+  <!-- Lógica de registro -->
+  <script src="../js/register.js" defer></script>
+</head>
+
+<body class="dark-theme">
+
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="brand-header">
+        <img src="../assets/logo.png" alt="Trivia Cloud Logo" class="logo-img">
+        <h1>Trivia <span>Cloud</span></h1>
+        <p>Crea tu cuenta para empezar a jugar</p>
+      </div>
+
+      <form id="register-form">
+        <div class="input-group">
+          <label for="username">Username</label>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            placeholder="Ex. trivia_master" 
+            required 
+            autocomplete="username"
+          >
+        </div>
+
+        <div class="input-group">
+          <label for="email">Email</label>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            placeholder="user@email.com" 
+            pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
+            title="Introduce un correo válido con punto y extensión (ejemplo: usuario@dominio.com)"
+            required 
+            autocomplete="email"
+          >
+        </div>
+
+        <div class="input-group">
+          <label for="password">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            placeholder="••••••••" 
+            required 
+            autocomplete="new-password"
+          >
+        </div>
+
+        <div class="input-group">
+          <label for="confirm-password">Repeat Password</label>
+          <input 
+            type="password" 
+            id="confirm-password" 
+            name="confirm-password" 
+            placeholder="••••••••" 
+            required 
+            autocomplete="new-password"
+          >
+        </div>
+
+        <div id="error-message" class="error-badge" style="display: none;"></div>
+        <div id="success-message" class="success-badge" style="display: none;"></div>
+
+        <button type="submit" class="btn btn-primary btn-block">
+          Register
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <p>You already have an account?</p>
+        <a href="login.html" class="btn btn-secondary btn-block">Login</a>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

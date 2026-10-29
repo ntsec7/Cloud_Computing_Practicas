@@ -1,0 +1,143 @@
+/* ==========================================
+   VARIABLES Y TEMA OSCURO
+   ========================================== */
+
+
+:root {
+  --bg-color: #0d0914;          /* Fondo violeta/negro profundo */
+  --card-bg: #171026;           /* Superficie de tarjeta morada oscura */
+  --border-color: #2e1d47;      /* Bordes suaves en tono violeta */
+  --text-main: #f8fafc;         /* Texto principal claro */
+  --text-muted: #a799c4;        /* Texto secundario lavanda */
+  
+  /* Acentos Fucsia / Rosa Neón */
+  --primary: #f43f5e;           /* Rosa/Fucsia neón vibrante */
+  --primary-hover: #e11d48;     /* Fucsia más intenso al pasar el cursor */
+  --primary-glow: rgba(244, 63, 94, 0.25); /* Resplandor para inputs */
+  
+  --secondary: #332247;         /* Botón secundario violeta */
+  --secondary-hover: #483063;   /* Hover botón secundario */
+  --error: #fb7185;             /* Rosa rojizo de alerta */
+  --error-bg: rgba(251, 113, 133, 0.1);
+  --radius: 12px;               /* Bordes redondeados modernos */
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+body.dark-theme {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==========================================
+   FORMULARIO E INPUTS
+   ========================================== */
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: #0f172a;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 12px var(--primary-glow);
+}
+
+/* ==========================================
+   BOTONES
+   ========================================== */
+.btn {
+  display: inline-block;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: #0f172a;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  color: #ffffff;
+}
+
+.btn-secondary {
+  background-color: var(--secondary);
+  color: var(--text-main);
+}
+
+.btn-secondary:hover {
+  background-color: var(--secondary-hover);
+}
+
+/* ==========================================
+   FOOTER Y MENSAJES DE ERROR
+   ========================================== */
+.auth-footer {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.auth-footer p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
+
+.error-badge {
+  background-color: var(--error-bg);
+  border: 1px solid var(--error);
+  color: var(--error);
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 15px;
+  text-align: center;
+}

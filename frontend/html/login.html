@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trivia Cloud - Login </title>
+
+  <link rel="shortcut icon" type="image/png" href="../assets/logo.png?v=1"> <!--Icono del navegador favicon con refresco de caché obligatorio-->
+  
+  <link rel="stylesheet" href="../css/main.css"> <!--Estilos globales-->
+  <link rel="stylesheet" href="../css/login.css"> <!--Estilos de login-->
+
+  <script src="../js/login.js"></script>
+
+</head>
+<body class="dark-theme">
+
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="brand-header">
+        <img src="../assets/logo.png" alt="Trivia Cloud Logo" class="logo-img">
+        <h1>Trivia <span>Cloud</span></h1>
+        <p>Enter your credentials</p>
+      </div>
+
+      <form id="login-form">
+        <div class="input-group">
+          <label for="username">Username or email</label>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            placeholder="Ex. trivia_master or user@email.com" 
+            required 
+            autocomplete="username"
+          >
+        </div>
+
+        <div class="input-group">
+          <label for="password">PASSWORD</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            placeholder="••••••••" 
+            required 
+            autocomplete="current-password"
+          >
+        </div>
+
+        <div id="error-message" class="error-badge" style="display: none;"></div>
+
+        <button type="submit" class="btn btn-primary btn-block">
+          Enviar
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <p>You don't have an account?</p>
+        <a href="register.html" class="btn btn-secondary btn-block">Register</a>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
