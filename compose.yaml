@@ -1,0 +1,48 @@
+#CONTENEDORES DE LA APLICACIÓN
+services:
+
+  #Microservicio de perfiles
+  profile:
+    build:
+      context: ./profile
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5002" #puerto host : puerto contenedor
+    environment:
+      DYNAMODB_ENDPOINT: http://profile-db:8000 # Dirección donde se encuentra DynamoDB
+      AWS_DEFAULT_REGION: eu-south-2 # Región configurada para el SDK de AWS
+      AWS_ACCESS_KEY_ID: local  # Identificador de acceso
+      AWS_SECRET_ACCESS_KEY: local # Clave secreta de acceso
+      PROFILE_TABLE: Profiles #	Nombre de la tabla utilizada por el microservicio
+    depends_on:
+      - profile-db  #se inicia primero profile-db y luego profile
+    networks:
+      - profile-network
+
+  #Base de datos local del microservicio de perfiles
+  profile-db:
+    image: amazon/dynamodb-local
+    # -jar Ejecuta un programa Java mediante el sistema de ejecución de Java. DynamoDBLocal.jar	Archivo que contiene DynamoDB Local
+    # -sharedDb	Utiliza una base de datos compartida para las conexiones. -dbPath	Indica dónde guardar los archivos de datos
+    command: -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal 
+    ports:
+      - "8002:8000" #8002 puerto de windows, 8000 puerto de DynamoDB dentro del contenedor
+    volumes:
+      - profile-db-data:/home/dynamodblocal #donde se guardan los datos nombre:ruta
+    networks:
+      - profile-network
+
+
+
+#REDES DE COMUNICACIÓN ENTRE LOS CONTENEDORES
+networks:
+  profile-network:
+    driver: bridge #tipo de red para que se comuniquen
+
+
+
+#ALMACENAMIENTO PERSISTENTE
+volumes:
+  profile-db-data:
+    external: true #Reutilizamos el volumen que ya existe
+    name: profile-db-data
