@@ -14,6 +14,7 @@ USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID")
 CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
 CLIENT_SECRET = os.getenv("COGNITO_CLIENT_SECRET")
 PROFILE_SERVICE_URL = os.getenv("PROFILE_SERVICE_URL")
+INTERNAL_SERVICE_TOKEN = os.getenv("INTERNAL_SERVICE_TOKEN")
 
 
 # Comprobar que existen las variables necesarias
@@ -22,7 +23,8 @@ required_variables= {
     "COGNITO_USER_POOL_ID": USER_POOL_ID,
     "COGNITO_CLIENT_ID": CLIENT_ID,
     "COGNITO_CLIENT_SECRET": CLIENT_SECRET,
-    "PROFILE_SERVICE_URL": PROFILE_SERVICE_URL
+    "PROFILE_SERVICE_URL": PROFILE_SERVICE_URL,
+    "INTERNAL_SERVICE_TOKEN": INTERNAL_SERVICE_TOKEN
 }
 
 missing_variables= [
@@ -35,6 +37,9 @@ if missing_variables:
         f"Faltan variables de retorno: {', '.join(missing_variables)}"
     )
 
+PROFILE_HEADERS = {
+    "X-Internal-Token": INTERNAL_SERVICE_TOKEN
+}
 
 # Crear el cliente de Cognito
 cognito= boto3.client(
@@ -104,6 +109,7 @@ def register_user(email, password, username, name, avatar_id):
         # Crear el perfil en el microservicio profile
         profile_response= requests.post(
             f"{PROFILE_SERVICE_URL}/profile",
+            headers=PROFILE_HEADERS,
             json={
                 "user_id": user_id,
                 "username": username,
@@ -162,6 +168,105 @@ def login_user(email, password):
         "token_type": authentication["TokenType"]
     }
 
+def get_my_data(access_token):
+    """Obtiene los datos del usuario que ha iniciado sesión."""
+
+    #Obtener los datos del usuario autenticado en Cognito
+    user = cognito.get_user(
+        AccessToken=access_token
+    )
+
+    user_id = next(
+        attribute["Value"]
+        for attribute in user["UserAttributes"]
+        if attribute["Name"] == "sub"
+    )
+
+    email = next(
+        attribute["Value"]
+        for attribute in user["UserAttributes"]
+        if attribute["Name"] == "email"
+    )
+
+    profile_response = requests.get(
+        f"{PROFILE_SERVICE_URL}/profile/{user_id}",
+        headers=PROFILE_HEADERS,
+        timeout=5
+    )
+
+    profile_response.raise_for_status()
+
+    profile = profile_response.json()
+
+    #Combinar los datos de profile y Cognito
+    result = {
+        "user_id": user_id,
+        "username": profile["username"],
+        "name": profile["name"],
+        "avatar_id": profile["avatar_id"],
+        "email": email
+    }
+
+    #Incluir el rol si es admin
+    if profile.get("role") == "admin":
+        result["role"] = "admin"
+
+    return result
+
+def update_my_data(access_token, data):
+    """Actualiza los datos del usuario autenticado."""
+
+    # Obtener datos del usuario autenticado.
+    user = cognito.get_user(
+        AccessToken=access_token
+    )
+
+    user_id = next(
+        attribute["Value"]
+        for attribute in user["UserAttributes"]
+        if attribute["Name"] == "sub"
+    )
+
+    profile_data = {
+        key: value
+        for key, value in data.items()
+        if key in {"username", "name", "avatar_id"}
+    }
+
+    # Actualizar el perfil
+    if profile_data:
+        profile_response = requests.patch(
+            f"{PROFILE_SERVICE_URL}/profile/{user_id}",
+            headers=PROFILE_HEADERS,
+            json=profile_data,
+            timeout=5
+        )
+
+        profile_response.raise_for_status()
+
+    # Actualizar el email en Cognito si se ha proporcionado.
+    if "email" in data:
+       
+        cognito_username = user["Username"]
+
+        cognito.admin_update_user_attributes(   #Cambia el email y lo marca como verificado
+            UserPoolId=USER_POOL_ID,
+            Username=cognito_username,
+            UserAttributes=[
+                {
+                    "Name": "email",
+                    "Value": data["email"]
+                },
+                {
+                    "Name": "email_verified",
+                    "Value": "true"
+                }
+            ]
+        )
+
+    return True    
+
+
 def change_password(access_token, previous_password, proposed_password):
     """Cambia la contraseña de un usuario autenticado.""" 
 
@@ -198,6 +303,7 @@ def delete_account(access_token):
     #Guardamos los datos del perfil por si la eliminación en Cognito falla
     profile_response= requests.get(
         f"{PROFILE_SERVICE_URL}/profile/{user_id}",
+        headers=PROFILE_HEADERS,
         timeout= 5
     )
 
@@ -212,6 +318,7 @@ def delete_account(access_token):
     if profile is not None:
         delete_response= requests.delete(
             f"{PROFILE_SERVICE_URL}/profile/{user_id}",
+            headers=PROFILE_HEADERS,
             timeout=5
         )
         delete_response.raise_for_status()
@@ -228,6 +335,7 @@ def delete_account(access_token):
             try:
                 requests.post(
                     f"{PROFILE_SERVICE_URL}/profile",
+                    headers=PROFILE_HEADERS,
                     json=profile,
                     timeout=5
                 ).raise_for_status()    
@@ -239,3 +347,412 @@ def delete_account(access_token):
                 )
 
         raise
+
+
+#OPERACIONES DE ADMIN
+def get_admin_user_data(access_token, target_user_id):
+    """Permite a un administrador consultar los datos de cualquier usuario."""
+
+    # Identificar al admin
+    admin = cognito.get_user(
+        AccessToken=access_token
+    )
+
+    admin_id = next(
+        attribute["Value"]
+        for attribute in admin["UserAttributes"]
+        if attribute["Name"] == "sub"
+    )
+
+    # Consultar el perfil del admin para comprobar que su rol
+    admin_response = requests.get(
+        f"{PROFILE_SERVICE_URL}/profile/{admin_id}",
+        headers=PROFILE_HEADERS,
+        timeout=5
+    )
+
+    admin_response.raise_for_status()
+    admin_profile = admin_response.json()
+
+    if admin_profile.get("role") != "admin":
+        raise PermissionError("El usuario no es administrador")
+
+    # Consultar el perfil del usuario 
+    profile_response = requests.get(
+        f"{PROFILE_SERVICE_URL}/profile/{target_user_id}",
+        headers=PROFILE_HEADERS,
+        timeout=5
+    )
+
+    if profile_response.status_code == 404:
+        return None
+
+    profile_response.raise_for_status()
+    profile = profile_response.json()
+
+    # Buscar en Cognito la cuenta cuyo sub coincide con el user_id.
+    pagination_token = None
+    cognito_user = None
+
+    while True:
+        params = {
+            "UserPoolId": USER_POOL_ID,
+            "Limit": 60 #vamos recibiendo los datos de 60 en 60
+        }
+
+        if pagination_token:
+            params["PaginationToken"] = pagination_token
+
+        response = cognito.list_users(**params) # El ** le pasa los params como diccionario
+
+        for user in response["Users"]:
+            user_sub = next(
+                (
+                    attribute["Value"]
+                    for attribute in user["Attributes"]
+                    if attribute["Name"] == "sub"
+                ),
+                None
+            )
+
+            if user_sub == target_user_id:
+                cognito_user = user
+                break
+
+        if cognito_user or "PaginationToken" not in response:   #Si hemos encontrado al usuario o no quedan más usuarios
+            break
+
+        pagination_token = response["PaginationToken"]
+
+    if cognito_user is None:
+        return None
+
+    # Obtener el email de Cognito.
+    email = next(
+        (
+            attribute["Value"]
+            for attribute in cognito_user["Attributes"]
+            if attribute["Name"] == "email"
+        ),
+        None
+    )
+
+    # Devolver los datos del usuario.
+    return {
+        "user_id": target_user_id,
+        "username": profile["username"],
+        "name": profile["name"],
+        "avatar_id": profile["avatar_id"],
+        "email": email,
+        "role": profile.get("role", "client")
+    }
+
+
+def update_admin_user_data(access_token, target_user_id, data):
+    """Permite a un administrador modificar cualquier cuenta."""
+
+    # Comprobar quién realiza la petición.
+    admin = cognito.get_user(
+        AccessToken=access_token
+    )
+
+    admin_id = next(
+        attribute["Value"]
+        for attribute in admin["UserAttributes"]
+        if attribute["Name"] == "sub"
+    )
+
+    # Comprobar que realmente es admin
+    admin_response = requests.get(
+        f"{PROFILE_SERVICE_URL}/profile/{admin_id}",
+        headers=PROFILE_HEADERS,
+        timeout=5
+    )
+
+    admin_response.raise_for_status()
+    admin_profile = admin_response.json()
+
+    if admin_profile.get("role") != "admin":
+        raise PermissionError("El usuario no es administrador")
+
+    # Consultar el perfil que queremos modificar.
+    profile_response = requests.get(
+        f"{PROFILE_SERVICE_URL}/profile/{target_user_id}",
+        headers=PROFILE_HEADERS,
+        timeout=5
+    )
+
+    if profile_response.status_code == 404:
+        return False
+
+    profile_response.raise_for_status()
+
+    # Comprobar los campos permitidos.
+    allowed_fields = {
+        "username",
+        "name",
+        "avatar_id",
+        "email",
+        "role"
+    }
+
+    if not set(data).issubset(allowed_fields):
+        raise ValueError("Hay campos no permitidos")
+
+    if "role" in data and data["role"] not in {"client", "admin"}:
+        raise ValueError("El rol indicado no es válido")
+
+    # Actualizar los datos del perfil
+    profile_data = {
+        key: value
+        for key, value in data.items()
+        if key in {"username", "name", "avatar_id"}
+    }
+
+    if "role" in data:
+        profile_data["role"] = data["role"]
+
+    if profile_data:
+        profile_response = requests.patch(
+            f"{PROFILE_SERVICE_URL}/profile/{target_user_id}/admin",
+            headers=PROFILE_HEADERS,
+            json=profile_data,
+            timeout=5
+        )
+
+        if profile_response.status_code == 404:
+            return False
+
+        profile_response.raise_for_status()
+
+    # Actualizar el email en Cognito si se ha cambiado
+    if "email" in data:
+
+        # Buscar la cuenta de Cognito correspondiente.
+        cognito_username = None
+        pagination_token = None
+
+        while True:
+            params = {
+                "UserPoolId": USER_POOL_ID,
+                "Limit": 60
+            }
+
+            if pagination_token:
+                params["PaginationToken"] = pagination_token
+
+            response = cognito.list_users(**params)
+
+            for user in response["Users"]:
+                user_sub = next(
+                    (
+                        attribute["Value"]
+                        for attribute in user["Attributes"]
+                        if attribute["Name"] == "sub"
+                    ),
+                    None
+                )
+
+                if user_sub == target_user_id:
+                    cognito_username = user["Username"]
+                    break
+
+            if cognito_username or "PaginationToken" not in response:
+                break
+
+            pagination_token = response["PaginationToken"]
+
+        if cognito_username is None:
+            raise ValueError("No se encontró la cuenta en Cognito")
+
+        cognito.admin_update_user_attributes(
+            UserPoolId=USER_POOL_ID,
+            Username=cognito_username,
+            UserAttributes=[
+                {"Name": "email", "Value": data["email"]},
+                {"Name": "email_verified", "Value": "true"}
+            ]
+        )
+
+    return True
+
+
+def change_admin_user_password(access_token, target_user_id, new_password):
+    """Permite a un administrador cambiar la contraseña de otro usuario."""
+
+    # Obtener el administrador autenticado desde Cognito
+    admin = cognito.get_user(
+        AccessToken=access_token
+    )
+
+    admin_id = next(
+        attribute["Value"]
+        for attribute in admin["UserAttributes"]
+        if attribute["Name"] == "sub"
+    )
+
+    # Evitar que utilice esta operación para cambiar su propia contraseña
+    if admin_id == target_user_id:
+        raise ValueError(
+            "Utiliza la operación de cambio de contraseña personal"
+        )
+
+    # Comprobar que el usuario autenticado es administrador
+    admin_profile_response = requests.get(
+        f"{PROFILE_SERVICE_URL}/profile/{admin_id}",
+        headers=PROFILE_HEADERS,
+        timeout=5
+    )
+    admin_profile_response.raise_for_status()
+
+    admin_profile = admin_profile_response.json()
+
+    if admin_profile.get("role") != "admin":
+        raise PermissionError(
+            "No tienes permisos de administrador"
+        )
+
+    # Buscar en Cognito al usuario cuya contraseña queremos cambiar
+    response = cognito.list_users(
+        UserPoolId=USER_POOL_ID,
+        Filter=f'sub = "{target_user_id}"',
+        Limit=1
+    )
+
+    users = response.get("Users", [])
+
+    if not users:
+        raise ValueError("Usuario no encontrado en Cognito")
+
+    cognito_username = users[0]["Username"]
+
+    # Establecer la nueva contraseña
+    cognito.admin_set_user_password(
+        UserPoolId=USER_POOL_ID,
+        Username=cognito_username,
+        Password=new_password,
+        Permanent=True
+    )
+
+    return True
+
+
+def delete_admin_user(access_token, target_user_id):
+    """Permite a un administrador eliminar cualquier cuenta."""
+
+    # Identificar al administrador.
+    admin = cognito.get_user(
+        AccessToken=access_token
+    )
+
+    admin_id = next(
+        attribute["Value"]
+        for attribute in admin["UserAttributes"]
+        if attribute["Name"] == "sub"
+    )
+
+    if admin_id == target_user_id:
+        raise ValueError(
+            "No puedes eliminar tu propia cuenta desde esta ruta"
+        )
+
+    # Comprobar que tiene permisos de administrador.
+    admin_response = requests.get(
+        f"{PROFILE_SERVICE_URL}/profile/{admin_id}",
+        headers=PROFILE_HEADERS,
+        timeout=5
+    )
+
+    admin_response.raise_for_status()
+    admin_profile = admin_response.json()
+
+    if admin_profile.get("role") != "admin":
+        raise PermissionError("El usuario no es administrador")
+
+    # Buscar el perfil que queremos eliminar.
+    profile_response = requests.get(
+        f"{PROFILE_SERVICE_URL}/profile/{target_user_id}",
+        headers=PROFILE_HEADERS,
+        timeout=5
+    )
+
+    if profile_response.status_code == 404:
+        return False
+
+    profile_response.raise_for_status()
+
+    profile = profile_response.json()
+
+    # Buscar la cuenta correspondiente en Cognito.
+    cognito_username = None
+    pagination_token = None
+
+    while True:
+        params = {
+            "UserPoolId": USER_POOL_ID,
+            "Limit": 60
+        }
+
+        if pagination_token:
+            params["PaginationToken"] = pagination_token
+
+        response = cognito.list_users(**params)
+
+        for user in response["Users"]:
+            user_sub = next(
+                (
+                    attribute["Value"]
+                    for attribute in user["Attributes"]
+                    if attribute["Name"] == "sub"
+                ),
+                None
+            )
+
+            if user_sub == target_user_id:
+                cognito_username = user["Username"]
+                break
+
+        if cognito_username or "PaginationToken" not in response:
+            break
+
+        pagination_token = response["PaginationToken"]
+
+    if cognito_username is None:
+        return False
+
+    # Eliminar el perfil de DynamoDB.
+    delete_response = requests.delete(
+        f"{PROFILE_SERVICE_URL}/profile/{target_user_id}",
+        headers=PROFILE_HEADERS,
+        timeout=5
+    )
+
+    delete_response.raise_for_status()
+
+    try:
+        # Eliminar la cuenta de Cognito.
+        cognito.admin_delete_user(
+            UserPoolId=USER_POOL_ID,
+            Username=cognito_username
+        )
+
+    except Exception:
+        # Si falla Cognito, intentar restaurar el perfil.
+        try:
+            requests.post(
+                f"{PROFILE_SERVICE_URL}/profile",
+                headers=PROFILE_HEADERS,
+                json=profile,
+                timeout=5
+            ).raise_for_status()
+
+        except Exception as rollback_error:
+            print(
+                "ERROR AL RESTAURAR EL PERFIL:",
+                type(rollback_error).__name__,
+                rollback_error
+            )
+
+        raise
+
+    return True

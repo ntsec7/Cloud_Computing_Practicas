@@ -1,5 +1,7 @@
 from flask import Blueprint, jsonify, request
 from botocore.exceptions import ClientError
+import os
+import hmac
 
 
 from app.services import (
@@ -12,6 +14,27 @@ from app.services import (
 
 # Crea un Blueprint de Flask, sirve para organizar las rutas de una aplicación en módulos independientes
 profile_bp = Blueprint('profile', __name__, url_prefix='/profile')
+
+
+# Comprobar que la petición viene de login. Lo ejecuta antes de entrar en cualquier ruta
+@profile_bp.before_request
+def verify_internal_token():
+    """Comprueba que la petición procede de un servicio autorizado."""
+
+    # La ruta de salud no necesita autenticación interna.
+    if request.endpoint == "profile.health":
+        return None
+
+    received_token = request.headers.get("X-Internal-Token", "")
+    expected_token = os.getenv("INTERNAL_SERVICE_TOKEN", "")
+
+    if not expected_token or not hmac.compare_digest( #compara los valores
+        received_token,
+        expected_token
+    ):
+        return jsonify({
+            "error": "Petición no autorizada"
+        }), 403
 
 
 @profile_bp.route('/health', methods=['GET'])
@@ -38,6 +61,12 @@ def create_profile_route():
 
     if not required_fields.issubset(data):
         return jsonify({'error': 'Faltan campos obligatorios'}), 400
+
+    data = {    #Eliminamos campos no permitidos
+        key: value
+        for key, value in data.items()
+        if key in required_fields
+    }
 
     try:
         create_profile(
@@ -112,3 +141,45 @@ def delete_profile_route(user_id):
 
     except ClientError:
         return jsonify({'error': 'No se pudo eliminar el perfil'}), 500
+
+
+# Actualizar perfil siendo admin
+@profile_bp.route('/<user_id>/admin', methods=['PATCH'])
+def admin_update_profile_route(user_id):
+    """Actualiza un perfil incluyendo su rol."""
+
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict) or not data:
+        return jsonify({'error': 'JSON inválido o vacío'}), 400
+
+    allowed_fields = {
+        'username',
+        'name',
+        'avatar_id',
+        'role'
+    }
+
+    data = {    #Eliminamos campos no permitidos
+        key: value
+        for key, value in data.items()
+        if key in allowed_fields
+    }
+
+    if 'role' in data and data['role'] not in {'client', 'admin'}:
+        return jsonify({'error': 'Rol no válido'}), 400
+
+    try:
+        updated = update_profile(user_id, data, admin=True)
+
+        if not updated:
+            return jsonify({'error': 'Perfil no encontrado'}), 404
+
+        return jsonify({
+            'message': 'Perfil actualizado correctamente'
+        }), 200
+
+    except ClientError:
+        return jsonify({
+            'error': 'No se pudo actualizar el perfil'
+        }), 500    

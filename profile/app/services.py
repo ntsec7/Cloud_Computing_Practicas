@@ -45,7 +45,8 @@ def create_profile(user_id, username, name, avatar_id):
             'user_id': user_id,
             'username': username,
             'name': name,
-            'avatar_id': avatar_id
+            'avatar_id': avatar_id,
+            'role':'client',
         },
         ConditionExpression= 'attribute_not_exists(user_id)'
     )
@@ -65,7 +66,7 @@ def get_profile(user_id):
 
 
 # Actualizar perfil
-def update_profile(user_id, data):
+def update_profile(user_id, data, admin=False):
     """Actualiza los datos permitidos de un perfil"""
 
     table= get_profile_table()
@@ -75,6 +76,9 @@ def update_profile(user_id, data):
         'name',
         'avatar_id'
     }
+
+    if admin:
+        allowed_fields.add('role')
 
     update_data= {  #se queda solo con los datos que cumplen allowed_fields
         key:value

@@ -6,6 +6,10 @@ services:
     build:
       context: ./profile
       dockerfile: Dockerfile
+
+    env_file:
+      - ./profile/.env
+
     ports:
       - "5002:5002" #puerto host : puerto contenedor
     environment:
@@ -29,6 +33,24 @@ services:
       - "8002:8000" #8002 puerto de windows, 8000 puerto de DynamoDB dentro del contenedor
     volumes:
       - profile-db-data:/home/dynamodblocal #donde se guardan los datos nombre:ruta
+    networks:
+      - profile-network
+
+  # Microservicio de autenticación
+  login:
+    build:
+      context: ./login
+      dockerfile: Dockerfile
+
+    env_file:
+      - ./login/.env
+
+    ports:
+      - "5003:5003"
+
+    depends_on:
+      - profile
+
     networks:
       - profile-network
 
