@@ -158,12 +158,24 @@ def update_my_data_route():
 
 @auth_bp.route("/change-password", methods=["POST"])
 def change_user_password():
+
+    access_token = request.headers.get("Authorization", "")
+
+    if not access_token.startswith("Bearer "):
+        return jsonify({
+            "error": "Falta el token de acceso"
+        }), 401
+
+    access_token = access_token.replace("Bearer ", "", 1)
+
+    if not access_token:
+        return jsonify({"error":"Se requiere acceso al token"}), 400
+
     data= request.get_json(silent=True)
 
     if not data:
         return jsonify({"error":"Se requiere un cuerpo JSON"}),400
 
-    access_token= data.get("access_token")
     previous_password= data.get("previous_password")
     proposed_password= data.get("proposed_password")
 
@@ -216,14 +228,18 @@ def logout():
 
 @auth_bp.route("/account", methods=["DELETE"])
 def delete_account_route():
-    data= request.get_json(silent=True) or {}   #El {} porque si fuese None daría error
 
-    access_token= data.get("access_token")
+    access_token = request.headers.get("Authorization", "")
+
+    if not access_token.startswith("Bearer "):
+        return jsonify({
+            "error": "Falta el token de acceso"
+        }), 401
+
+    access_token = access_token.replace("Bearer ", "", 1)
 
     if not access_token:
-        return jsonify({
-            "error":"Falta el token de acceso"
-        }), 400    
+        return jsonify({"error":"Se requiere acceso al token"}), 400
 
     try:
         delete_account(access_token)
