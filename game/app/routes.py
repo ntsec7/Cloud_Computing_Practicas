@@ -43,7 +43,7 @@ def start_game():
     # Obtener los datos
     data= request.get_json(silent= True)
 
-    if not data:
+    if data is None:
         return jsonify({
             'error':'Se deben enviar los datos en formato JSON'
         }), 400
@@ -51,23 +51,16 @@ def start_game():
 
     category=data.get("category")
     difficulty=data.get("difficulty")
-
-    # Comprobar que están todos los datos necesarios
-    if category is None or difficulty is None:
-        return jsonify({
-            'error':'Faltan campos obligatorios'
-        }), 400
-
     
-    # Comprobar que la categoría es un número entero
-    if type(category) is not int:
+    # Comprobar que la categoría es un número entero si se ha enviado
+    if category is not None and type(category) is not int:
         return jsonify({
             'error':'La categoría debe ser un número entero'
         }), 400
 
     
     # Comprobar la dificultad
-    if difficulty not in ['easy', 'medium', 'hard']:
+    if difficulty is not None and difficulty not in ['easy', 'medium', 'hard']:
         return jsonify({
             'error': 'La dificultad no es válida'
         }), 400

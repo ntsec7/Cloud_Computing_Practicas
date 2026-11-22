@@ -91,10 +91,14 @@ def get_questions(category, difficulty):
     # Parámetros a enviar a OpenTDB
     params = {
         'amount': QUESTION_COUNT,
-        'category': category,
-        'difficulty': difficulty,
         'type': 'multiple'
     }
+
+    if category is not None:
+        params['category'] = category
+
+    if difficulty is not None:
+        params['difficulty'] = difficulty
 
     # Hacer petición a OpenTDB
     try:
@@ -277,6 +281,9 @@ def save_response(game_id, user_id, question_id, answer):
     # Comprobar si la respuesta es correcta
     is_correct = answer == question['correct_answer_index']
 
+    # Obtener el texto de la respuesta correcta
+    correct_answer = question['answers'][int(question['correct_answer_index'])]
+
     # Identificador único de la respuesta dentro de la partida
     response_id = f"{game_id}#{question_id}"
 
@@ -360,6 +367,7 @@ def save_response(game_id, user_id, question_id, answer):
     result = {
         'question_id': question_id,
         'is_correct': is_correct,
+        'correct_answer': correct_answer,
         'response_time_ms': response_time_ms,
         'completed': completed
     }
