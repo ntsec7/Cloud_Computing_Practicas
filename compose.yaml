@@ -54,12 +54,46 @@ services:
     networks:
       - profile-network
 
+  # Microservicio de juego
+  game:
+    build:
+      context: ./game
+      dockerfile: Dockerfile
+
+    env_file:
+      - ./game/.env
+
+    ports:
+      - "5004:5004"
+
+    depends_on:
+      - game-db
+
+    networks:
+      - game-network
+
+  # Base de datos local del microservicio de juego
+  game-db:
+    image: amazon/dynamodb-local
+    command: -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal
+
+    ports:
+      - "8004:8000"
+
+    volumes:
+      - game-db-data:/home/dynamodblocal
+
+    networks:
+      - game-network
+
 
 
 #REDES DE COMUNICACIÓN ENTRE LOS CONTENEDORES
 networks:
   profile-network:
     driver: bridge #tipo de red para que se comuniquen
+  game-network:
+    driver: bridge
 
 
 
@@ -68,3 +102,5 @@ volumes:
   profile-db-data:
     external: true #Reutilizamos el volumen que ya existe
     name: profile-db-data
+  game-db-data:
+    name: game-db-data

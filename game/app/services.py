@@ -14,8 +14,17 @@ from boto3.dynamodb.types import TypeSerializer
 # Cargar las variables de entorno
 load_dotenv()
 
-# Conexión con DynamoDB local
+# Conexión con DynamoDB local. Cliente de alto nivel para trabajar con games_table y responses_table (convierte los valores al formato que entiende DynamoDB)
 dynamodb = boto3.resource(
+    'dynamodb',
+    endpoint_url=os.getenv('DYNAMODB_ENDPOINT_URL'),
+    region_name=os.getenv('AWS_DEFAULT_REGION'),
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
+)
+
+# Cliente de bajo nivel de DynamoDB para las transacciones (tú conviertes los valores al formato de DynamoDB)
+dynamodb_client = boto3.client(
     'dynamodb',
     endpoint_url=os.getenv('DYNAMODB_ENDPOINT_URL'),
     region_name=os.getenv('AWS_DEFAULT_REGION'),
@@ -290,52 +299,10 @@ def save_response(game_id, user_id, question_id, answer):
     # Preparar la fecha de inicio de la siguiente pregunta
     next_started_at = datetime.now(timezone.utc).isoformat()
 
-    # try:
-    #     responses_table.put_item(
-    #         Item=response_item,
-    #         ConditionExpression='attribute_not_exists(response_id)'
-    #     )
-
-    #     print("RESPUESTA GUARDADA CORRECTAMENTE")
-
-    # except ClientError as error:
-    #     print("ERROR AL GUARDAR EN GameResponses:")
-    #     print(error.response)
-    #     return None, 'Error al guardar la respuesta'
-
-
-
-    # try:
-    #     games_table.update_item(
-    #         Key={
-    #             'game_id': game_id
-    #         },
-    #         UpdateExpression=(
-    #             'SET current_question_index = :next_index, '
-    #             'current_question_started_at = :started_at'
-    #         ),
-    #         ConditionExpression=(
-    #             'current_question_index = :current_index '
-    #             'AND user_id = :user_id'
-    #         ),
-    #         ExpressionAttributeValues={
-    #             ':next_index': next_index,
-    #             ':started_at': next_started_at,
-    #             ':current_index': current_index,
-    #             ':user_id': user_id
-    #         }
-    #     )
-
-    #     print("PARTIDA ACTUALIZADA CORRECTAMENTE")
-
-    # except ClientError as error:
-    #     print("ERROR AL ACTUALIZAR Games:")
-    #     print(error.response)
-    #     return None, 'Error al actualizar la partida'
-
     # Ejecutar ambas operaciones en una única transacción de manera atómica con transact_write_items
     try:
-        dynamodb.meta.client.transact_write_items(
+
+        dynamodb_client.transact_write_items(
             TransactItems=[
                 {
                     'Put': {
@@ -374,9 +341,8 @@ def save_response(game_id, user_id, question_id, answer):
             ]
         )
 
-        print("RESPUESTA GUARDADA Y PARTIDA ACTUALIZADA CORRECTAMENTE")
-
     except ClientError as error:
+
         print("ERROR EN LA TRANSACCIÓN:")
         print(error.response)
 
