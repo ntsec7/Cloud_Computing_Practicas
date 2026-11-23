@@ -1,10 +1,11 @@
-import os
-import hmac
-import hashlib
 import base64
+import hashlib
+import hmac
+import os
+
 import boto3
-from dotenv import load_dotenv
 import requests
+from dotenv import load_dotenv
 
 # Cargar las variables del archivo .env
 load_dotenv()
@@ -134,7 +135,7 @@ def register_user(email, password, username, name, avatar_id):
             )
             print("Registro incompleto: usuario eliminado de Cognito")
 
-        except Exception as rollback_error:
+        except Exception as rollback_error: # noqa: BLE001
             print(
                 "ERROR al deshacer el registro:",
                 type(rollback_error).__name__,
@@ -340,7 +341,7 @@ def delete_account(access_token):
                     timeout=5
                 ).raise_for_status()    
 
-            except Exception as rollback_error:
+            except Exception as rollback_error: # noqa: BLE001
                 print(
                     "ERROR al restaurar el perfil:",
                     type(rollback_error).__name__
@@ -746,7 +747,7 @@ def delete_admin_user(access_token, target_user_id):
                 timeout=5
             ).raise_for_status()
 
-        except Exception as rollback_error:
+        except Exception as rollback_error: # noqa: BLE001
             print(
                 "ERROR AL RESTAURAR EL PERFIL:",
                 type(rollback_error).__name__,

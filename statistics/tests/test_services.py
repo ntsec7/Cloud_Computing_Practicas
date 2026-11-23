@@ -1,23 +1,18 @@
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
-from botocore.exceptions import ClientError
 import requests
-
+from botocore.exceptions import ClientError
 
 from app.services import (
-    calculate_statistics,
+    authenticate_user,
     calculate_game_statistics,
     calculate_general_statistics,
-    get_authenticated_user,
-    get_user_role,
-    authenticate_user,
+    calculate_statistics,
     call_game_service,
-    get_game_data,
-    get_game_responses,
-    get_user_responses,
-    get_game_owner,
+    get_authenticated_user,
     get_game_statistics,
-    get_general_statistics
+    get_general_statistics,
+    get_user_role,
 )
 
 

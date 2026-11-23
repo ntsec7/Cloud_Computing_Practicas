@@ -1,8 +1,9 @@
 
-from unittest.mock import patch, MagicMock
-from botocore.exceptions import ClientError
-from app import services
+from unittest.mock import patch
 
+from botocore.exceptions import ClientError
+
+from app import services
 
 # --------------------------------------------------
 # FUNCIONES AUXILIARES

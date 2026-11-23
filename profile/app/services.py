@@ -1,7 +1,9 @@
 # Gestiona las operaciones sobre DynamoDB
 import os
+
 import boto3
 from botocore.exceptions import ClientError
+
 
 def get_profile_table():
     """Obtiene la tabla de perfiles de DynamoDB."""

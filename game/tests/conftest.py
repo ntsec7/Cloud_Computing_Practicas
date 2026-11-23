@@ -11,6 +11,7 @@ os.environ.setdefault("INTERNAL_SERVICE_TOKEN", "test-internal-token")
 
 import pytest
 from flask import Flask
+
 from app.routes import game_bp
 
 

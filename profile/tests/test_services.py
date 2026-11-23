@@ -1,14 +1,9 @@
 
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 from botocore.exceptions import ClientError
 
-from app.services import (
-    create_profile,
-    get_profile,
-    update_profile,
-    delete_profile
-)
+from app.services import create_profile, delete_profile, get_profile, update_profile
 
 
 # Simula un error de DynamoDB

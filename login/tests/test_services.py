@@ -1,25 +1,26 @@
 
-import pytest
-import hmac
-import hashlib
 import base64
+import hashlib
+import hmac
+from unittest.mock import MagicMock, patch
 
-from unittest.mock import patch, MagicMock
+import pytest
+import requests
 from botocore.exceptions import ClientError
 
 from app.services import (
     calculate_secret_hash,
-    register_user,
-    login_user,
-    get_my_data,
-    update_my_data,
-    change_password,
-    logout_user,
-    delete_account,
-    get_admin_user_data,
-    update_admin_user_data,
     change_admin_user_password,
-    delete_admin_user
+    change_password,
+    delete_account,
+    delete_admin_user,
+    get_admin_user_data,
+    get_my_data,
+    login_user,
+    logout_user,
+    register_user,
+    update_admin_user_data,
+    update_my_data,
 )
 
 
@@ -165,11 +166,11 @@ def test_register_user_error_creating_profile(mock_cognito, mock_post):
         ]
     }
 
-    mock_post.return_value.raise_for_status.side_effect = Exception(
+    mock_post.return_value.raise_for_status.side_effect = requests.HTTPError(
         "Error en profile"
     )
 
-    with pytest.raises(Exception):
+    with pytest.raises(requests.HTTPError):
         register_user(
             "user@example.com",
             "Password123!",
@@ -316,11 +317,11 @@ def test_update_my_data_email(mock_cognito):
 @patch("app.services.cognito")
 def test_update_my_data_error_profile(mock_cognito, mock_patch):
     mock_cognito.get_user.return_value = make_cognito_user()
-    mock_patch.return_value.raise_for_status.side_effect = Exception(
+    mock_patch.return_value.raise_for_status.side_effect = requests.HTTPError(
         "Error en profile"
     )
 
-    with pytest.raises(Exception):
+    with pytest.raises(requests.HTTPError):
         update_my_data(
             "access-token",
             {"username": "nuevo"}

@@ -1,9 +1,6 @@
 
 from unittest.mock import patch
 
-from tests.test_services import make_cognito_user, make_profile_response
-
-
 # ==================================================
 # REGISTER
 # ==================================================

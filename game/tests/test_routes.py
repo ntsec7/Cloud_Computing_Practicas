@@ -1,9 +1,6 @@
 
 from unittest.mock import patch
 
-from app import routes
-
-
 # --------------------------------------------------
 # HELPERS
 # --------------------------------------------------

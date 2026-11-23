@@ -51,5 +51,17 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
+      - name: Instalar Ruff
+        run: pip install ruff
+
+      - name: Analizar código Python
+        run: ruff check .
+
+      - name: Analizar Dockerfiles con Hadolint
+        uses: hadolint/hadolint-action@v3.5.0
+        with:
+          recursive: true
+          failure-threshold: warning
+
       - name: Ejecutar tests
         run: python -m pytest -v

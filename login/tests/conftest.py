@@ -15,7 +15,7 @@ os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "test")
 import pytest
 from flask import Flask
 
-from app.routes import auth_bp, admin_bp
+from app.routes import admin_bp, auth_bp
 
 
 @pytest.fixture

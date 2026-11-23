@@ -1,10 +1,9 @@
 
+from unittest.mock import patch
+
 import pytest
-
-from flask import Flask
-from unittest.mock import patch, Mock
-
 from botocore.exceptions import ClientError
+from flask import Flask
 
 from app.routes import profile_bp
 

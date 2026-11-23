@@ -1,16 +1,16 @@
 
+import html
 import os
+import random  # permite mezclar las respuestas de una pregunta
+import uuid  # genera los ids
+from datetime import UTC, datetime  # para guardar cuando comenzo una partida
+
 import boto3
 import requests
-import html
-import uuid # genera los ids
-import random # permite mezclar las respuestas de una pregunta
-from datetime import datetime, timezone # para guardar cuando comenzo una partida
 from boto3.dynamodb.conditions import Key
-
-from dotenv import load_dotenv
-from botocore.exceptions import ClientError
 from boto3.dynamodb.types import TypeSerializer
+from botocore.exceptions import ClientError
+from dotenv import load_dotenv
 
 # Cargar las variables de entorno
 load_dotenv()
@@ -180,7 +180,7 @@ def create_game(user_id, category, difficulty):
         'difficulty': difficulty,
         'questions': questions,
         'current_question_index': 0,
-        'current_question_started_at': datetime.now(timezone.utc).isoformat()
+        'current_question_started_at': datetime.now(UTC).isoformat()
     }
 
     try:
@@ -270,7 +270,7 @@ def save_response(game_id, user_id, question_id, answer):
 
     # Calcular el tiempo transcurrido
     start_time = datetime.fromisoformat(started_at)
-    end_time = datetime.now(timezone.utc)
+    end_time = datetime.now(UTC)
 
     response_time_ms = int(
         (end_time - start_time).total_seconds() * 1000
@@ -305,7 +305,7 @@ def save_response(game_id, user_id, question_id, answer):
     completed = next_index >= len(game['questions'])
 
     # Preparar la fecha de inicio de la siguiente pregunta
-    next_started_at = datetime.now(timezone.utc).isoformat()
+    next_started_at = datetime.now(UTC).isoformat()
 
     # Ejecutar ambas operaciones en una única transacción de manera atómica con transact_write_items
     try:

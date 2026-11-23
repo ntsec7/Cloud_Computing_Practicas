@@ -1,5 +1,4 @@
-import boto3 #biblioteca oficial de python para comunicarse con los servicios de AWS
-from botocore.exceptions import ClientError #biblioteca sobre la que se apoya boto3
+import boto3  #biblioteca oficial de python para comunicarse con los servicios de AWS
 
 #Base de datos dynamodb local
 dynamodb= boto3.client(

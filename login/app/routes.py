@@ -1,5 +1,18 @@
-from flask import Blueprint, request, jsonify
-from app.services import register_user, login_user, change_password, logout_user, delete_account, get_my_data, update_my_data, get_admin_user_data, update_admin_user_data, delete_admin_user, change_admin_user_password
+from flask import Blueprint, jsonify, request
+
+from app.services import (
+    change_admin_user_password,
+    change_password,
+    delete_account,
+    delete_admin_user,
+    get_admin_user_data,
+    get_my_data,
+    login_user,
+    logout_user,
+    register_user,
+    update_admin_user_data,
+    update_my_data,
+)
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -36,7 +49,7 @@ def register():
             "user_id": user_id
         }),201
 
-    except Exception as e:
+    except Exception as e: # noqa: BLE001
         print(f"ERROR EN REGISTRO: {type(e).__name__}: {e}")
 
         return jsonify({
@@ -65,7 +78,7 @@ def login():
             "tokens": tokens
         }), 200
 
-    except Exception as e:
+    except Exception as e: # noqa: BLE001
         print(f"ERROR EN LOGIN: {type(e).__name__}: {e}")
 
         return jsonify({
@@ -92,7 +105,7 @@ def get_my_data_route():
 
         return jsonify(data), 200
 
-    except Exception as error:
+    except Exception as error: # noqa: BLE001
         print(
             "ERROR AL CONSULTAR LOS DATOS:",
             type(error).__name__,
@@ -145,7 +158,7 @@ def update_my_data_route():
             "message": "Datos actualizados correctamente"
         }), 200
 
-    except Exception as error:
+    except Exception as error: # noqa: BLE001
         print(
             "ERROR AL ACTUALIZAR LOS DATOS:",
             type(error).__name__,
@@ -189,7 +202,7 @@ def change_user_password():
             "message": "Contraseña actualizada correctamente"
         }), 200
 
-    except Exception as e:
+    except Exception as e: # noqa: BLE001
         print(f"ERROR EN CAMBIO DE CONTRASEÑA: {type(e).__name__}: {e}")
 
         return jsonify({
@@ -219,7 +232,7 @@ def logout():
             "message":"Sesión cerrada correctamente"
         }), 200
     
-    except Exception as e:
+    except Exception as e: # noqa: BLE001
         print(f"ERROR EN LOGOUT: {type(e).__name__}: {e}")
 
         return jsonify({
@@ -248,7 +261,7 @@ def delete_account_route():
             "message":"Cuenta eliminada correctamente"
         }), 200
 
-    except Exception as error:
+    except Exception as error: # noqa: BLE001
         print(
             "ERROR AL ELIMINAR CUENTA:",
             type(error).__name__,
@@ -287,12 +300,12 @@ def get_admin_user_data_route(user_id):
 
         return jsonify(data), 200
 
-    except PermissionError:
+    except PermissionError: 
         return jsonify({
             "error": "No tienes permisos de administrador"
         }), 403
 
-    except Exception as error:
+    except Exception as error: # noqa: BLE001
         print(
             "ERROR AL CONSULTAR USUARIO:",
             type(error).__name__,
@@ -350,7 +363,7 @@ def update_admin_user_data_route(user_id):
             "error": str(error)
         }), 400
 
-    except Exception as error:
+    except Exception as error: # noqa: BLE001
         print(
             "ERROR AL ACTUALIZAR USUARIO:",
             type(error).__name__,
@@ -407,7 +420,7 @@ def change_admin_user_password_route(user_id):
     except ValueError as error:
         return jsonify({"error": str(error)}), 400
 
-    except Exception:
+    except Exception: # noqa: BLE001
         return jsonify({
             "error": "No se pudo modificar la contraseña"
         }), 500
@@ -451,7 +464,7 @@ def delete_admin_user_route(user_id):
             "error": str(error)
         }), 400
 
-    except Exception as error:
+    except Exception as error: # noqa: BLE001
         print(
             "ERROR AL ELIMINAR USUARIO:",
             type(error).__name__,

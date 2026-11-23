@@ -1,16 +1,10 @@
-from flask import Blueprint, jsonify, request
-from botocore.exceptions import ClientError
-import os
 import hmac
+import os
 
+from botocore.exceptions import ClientError
+from flask import Blueprint, jsonify, request
 
-from app.services import (
-    create_profile,
-    get_profile,
-    update_profile,
-    delete_profile
-)
-
+from app.services import create_profile, delete_profile, get_profile, update_profile
 
 # Crea un Blueprint de Flask, sirve para organizar las rutas de una aplicación en módulos independientes
 profile_bp = Blueprint('profile', __name__, url_prefix='/profile')
