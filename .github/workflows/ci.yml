@@ -15,6 +15,14 @@ jobs:
     name: Tests - ${{ matrix.service }}
     runs-on: ubuntu-latest
 
+    env:
+      AWS_DEFAULT_REGION: eu-south-2
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      COGNITO_REGION: eu-south-2
+      DYNAMODB_ENDPOINT_URL: http://localhost:8004
+      INTERNAL_SERVICE_TOKEN: test-internal-token
+
     strategy:
       fail-fast: false #para que si falla un test siga ejecutando los otros
       matrix:
