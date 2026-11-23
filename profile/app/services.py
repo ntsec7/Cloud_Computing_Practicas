@@ -69,8 +69,6 @@ def get_profile(user_id):
 def update_profile(user_id, data, admin=False):
     """Actualiza los datos permitidos de un perfil"""
 
-    table= get_profile_table()
-
     allowed_fields= {
         'username',
         'name',
@@ -88,6 +86,8 @@ def update_profile(user_id, data, admin=False):
 
     if not update_data: #si no hay datos para actualizar se sale
         return False
+
+    table= get_profile_table()
 
     update_expression = 'SET ' + ', '.join(
         f'#{key} = :{key}'

@@ -1,0 +1,47 @@
+# Workflow que se ejecuta al al hacer push o al abrir o actualizar un pull_request a main
+# Ejecuta los tests para comprobar que todo funciona
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  tests:
+    name: Tests - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false #para que si falla un test siga ejecutando los otros
+      matrix:
+        service:
+          - login
+          - profile
+          - game
+          - statistics
+
+    defaults:
+      run:
+        working-directory: ./${{ matrix.service }}
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Ejecutar tests
+        run: python -m pytest -v

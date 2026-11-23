@@ -3,3 +3,4 @@ boto3 #se comunica con AWS y Cognito
 requests #se comunica con el microservicio de profile
 python-dotenv #carga las variables de .env
 gunicorn #Ejecutar Flask en el contenedor Docker
+pytest
