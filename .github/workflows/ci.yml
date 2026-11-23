@@ -57,11 +57,20 @@ jobs:
       - name: Analizar código Python
         run: ruff check .
 
+      - name: Ejecutar tests
+        run: python -m pytest -v
+
+  
+  lint-dockerfiles:
+    name: Analizar Dockerfiles
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
       - name: Analizar Dockerfiles con Hadolint
         uses: hadolint/hadolint-action@v3.5.0
         with:
           recursive: true
           failure-threshold: warning
-
-      - name: Ejecutar tests
-        run: python -m pytest -v
