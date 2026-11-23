@@ -11,7 +11,7 @@ on:
       - main
 
 jobs:
-  tests:
+  tests: # Comprueba el código python y que los tests estén bien
     name: Tests - ${{ matrix.service }}
     runs-on: ubuntu-latest
 
@@ -60,7 +60,7 @@ jobs:
       - name: Ejecutar tests
         run: python -m pytest -v
 
-  
+  # Comprueba que los dockerfiles estén bien
   lint-dockerfiles:
     name: Analizar Dockerfiles
     runs-on: ubuntu-latest
@@ -74,3 +74,36 @@ jobs:
         with:
           recursive: true
           failure-threshold: warning
+
+  # Construir las imágenes
+  build-images:
+    name: Construir imagen - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+
+    needs:
+      - tests
+      - lint-dockerfiles
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - login
+          - profile
+          - game
+          - statistics
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Construir imagen Docker
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.service }}
+          file: ./${{ matrix.service }}/Dockerfile
+          push: false
+          tags: cloud-computing/${{ matrix.service }}:ci
