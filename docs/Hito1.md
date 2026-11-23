@@ -45,24 +45,43 @@ A continuación, se expone una documentación sintética de los endpoints princi
 <ins>Login</ins>
 
 | Método | Ruta | Payload JSON | Descripción |
-| ---    | ---  |     ---      |   ---       |
-| POST   | /auth/register | username, email, password | Registrar una nueva cuenta |
-| POST   | /auth/login    | username o email, password | Iniciar sesión |
+| --- | --- | --- | --- |
+| GET | `/health` | — | Comprobar el estado del microservicio |
+| POST | `/auth/register` | `email`, `password`, `username`, `name`, `avatar_id` | Registrar una nueva cuenta |
+| POST | `/auth/login` | `email`, `password` | Iniciar sesión |
+| GET | `/auth/me` | — *(Requiere Bearer Token)* | Consultar los datos del usuario autenticado |
+| PATCH | `/auth/me` | `username`, `name`, `avatar_id`, `email` *(opcionales, Bearer Token)* | Actualizar los datos del usuario autenticado |
+| POST | `/auth/change-password` | `previous_password`, `proposed_password` *(Bearer Token)* | Cambiar la contraseña del usuario autenticado |
+| POST | `/auth/logout` | — *(Requiere Bearer Token)* | Cerrar sesión |
+| DELETE | `/auth/account` | — *(Requiere Bearer Token)* | Eliminar la cuenta del usuario autenticado |
+| GET | `/admin/users/<user_id>` | — *(Requiere Bearer Token de admin)* | Consultar los datos de un usuario (Admin) |
+| PATCH | `/admin/users/<user_id>` | Campos a actualizar *(Bearer Token de admin)* | Modificar los datos de un usuario (Admin) |
+| PATCH | `/admin/users/<user_id>/password` | `new_password` *(Bearer Token de admin)* | Cambiar la contraseña de un usuario (Admin) |
+| DELETE | `/admin/users/<user_id>` | — *(Requiere Bearer Token de admin)* | Eliminar cualquier cuenta de usuario (Admin) |
 
-<ins>Perfil</ins>
+<ins>Profile</ins>
 | Método | Ruta | Payload JSON | Descripción |
-| ---    | ---  |     ---      |   ---       |
-| GET    | /profile/{id} | - | Consultar los datos de una cuenta |
-| PATCH  | /profile/{id} | username, email, password | Cambiar los datos de una cuenta |
-| DELETE | /profile/{id} | - | Elimina la cuenta de un usuario |
+| --- | --- | --- | --- |
+| GET | `/profile/health` | — | Comprobar el estado del microservicio de perfil |
+| POST | `/profile` | `user_id`, `username`, `name`, `avatar_id` *(Requiere X-Internal-Token)* | Crear un nuevo perfil de usuario |
+| GET | `/profile/<user_id>` | — *(Requiere X-Internal-Token)* | Consultar los datos de un perfil |
+| PATCH | `/profile/<user_id>` | `username`, `name`, `avatar_id` *(opcionales, X-Internal-Token)* | Actualizar los datos de un perfil |
+| DELETE | `/profile/<user_id>` | — *(Requiere X-Internal-Token)* | Eliminar un perfil |
+| PATCH | `/profile/<user_id>/admin` | `username`, `name`, `avatar_id`, `role` (`client` \| `admin`) *(opcionales, X-Internal-Token)* | Actualizar un perfil incluyendo su rol (Admin) |
 
-<ins>Juego</ins>
+<ins>Game</ins>
 | Método | Ruta | Payload JSON | Descripción |
-| ---    | ---  |     ---      |   ---       |
-| POST   | /games | amount, category, difficulty, type | Crea un nuevo juego |
-| POST   | /games/{game_id}/{round_num} | answer, category, difficulty, type, time | Guarda los datos de una respuesta |
+| --- | --- | --- | --- |
+| GET | `/game/health` | — | Comprobar el estado del microservicio |
+| POST | `/game/` | `category` *(int, opcional)*, `difficulty` (`easy` \| `medium` \| `hard`, *opcional*) *(Bearer Token)* | Crear una nueva partida |
+| POST | `/game/<game_id>/answer` | `question_id` *(str)*, `answer` *(int)* *(Bearer Token)* | Enviar la respuesta a una pregunta de la partida |
+| GET | `/game/internal/games/<game_id>` | — *(Requiere X-Internal-Token)* | Recuperar los datos de una partida para estadísticas |
+| GET | `/game/internal/games/<game_id>/responses` | — *(Requiere X-Internal-Token)* | Recuperar las respuestas de una partida para estadísticas |
+| GET | `/game/internal/users/<user_id>/responses` | — *(Requiere X-Internal-Token)* | Recuperar todas las respuestas de un usuario para estadísticas |
 
-<ins>Estadísticas</ins>
+<ins>Statistics</ins>
 | Método | Ruta | Payload JSON | Descripción |
-| ---    | ---  |     ---      |   ---       |
-| GET    | /statistics/{id} | difficulty, category | Consultar las estadísticas de un perfil, con filtros opcionales |
+| --- | --- | --- | --- |
+| GET | `/statistics/health` | — | Comprobar el estado del microservicio de estadísticas |
+| GET | `/statistics/game/<game_id>` | — *(Requiere Bearer Token)* | Consultar las estadísticas de una partida (propietario o admin) |
+| GET | `/statistics/user/<user_id>` | — *(Requiere Bearer Token)* | Consultar las estadísticas totales de un usuario (propio usuario o admin) |
