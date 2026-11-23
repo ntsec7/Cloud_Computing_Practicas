@@ -18,6 +18,14 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
+health_bp = Blueprint("health", __name__)
+
+@health_bp.route('/health', methods=['GET'])
+def health():
+    return jsonify({
+        'message': 'Microservicio de login funcionando'
+    }), 200
+
 @auth_bp.route("/register", methods=["POST"])
 def register():
     """Registra un nuevo usuario."""

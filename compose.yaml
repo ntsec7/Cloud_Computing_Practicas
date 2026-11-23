@@ -19,9 +19,16 @@ services:
       AWS_SECRET_ACCESS_KEY: local # Clave secreta de acceso
       PROFILE_TABLE: Profiles #	Nombre de la tabla utilizada por el microservicio
     depends_on:
-      - profile-db  #se inicia primero profile-db y luego profile
+      profile-db:
+        condition: service_healthy  #se inicia primero profile-db y luego profile
     networks:
-      - profile-network
+    - profile-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5002/profile/health')"]
+      interval: 30s # comprueba el estado cada 30 seg
+      timeout: 5s # da como máximo 5 seg para la respuesta
+      retries: 3  # se marca el contenedor no saludable después de 3 fallos seguidos
+      start_period: 15s # da 15seg para arrancar sin contabilizar fallos
 
   #Base de datos local del microservicio de perfiles
   profile-db:
@@ -35,6 +42,12 @@ services:
       - profile-db-data:/home/dynamodblocal #donde se guardan los datos nombre:ruta
     networks:
       - profile-network
+    healthcheck:
+      test: ["CMD", "curl", "-sS", "-o", "/dev/null", "http://localhost:8000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   # Microservicio de autenticación
   login:
@@ -49,10 +62,17 @@ services:
       - "5003:5003"
 
     depends_on:
-      - profile
+      profile:
+        condition: service_healthy
 
     networks:
       - profile-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5003/health')"]
+      interval: 30s # comprueba el estado cada 30 seg
+      timeout: 5s # da como máximo 5 seg para la respuesta
+      retries: 3  # se marca el contenedor no saludable después de 3 fallos seguidos
+      start_period: 15s # da 15seg para arrancar sin contabilizar fallos
 
   # Microservicio de juego
   game:
@@ -67,10 +87,18 @@ services:
       - "5004:5004"
 
     depends_on:
-      - game-db
+      game-db:
+        condition: service_healthy
 
     networks:
       - game-network
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5004/game/health')"]
+      interval: 30s # comprueba el estado cada 30 seg
+      timeout: 5s # da como máximo 5 seg para la respuesta
+      retries: 3  # se marca el contenedor no saludable después de 3 fallos seguidos
+      start_period: 15s # da 15seg para arrancar sin contabilizar fallos
 
   # Base de datos local del microservicio de juego
   game-db:
@@ -86,6 +114,13 @@ services:
     networks:
       - game-network
 
+    healthcheck:
+      test: ["CMD", "curl", "-sS", "-o", "/dev/null", "http://localhost:8000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
   # Microservicio de estadísticas
   statistics:
     build:
@@ -99,12 +134,21 @@ services:
       - "5005:5005"
 
     depends_on:
-      - profile
-      - game
+      profile:
+        condition: service_healthy
+      game:
+        condition: service_healthy
 
     networks:
       - profile-network
       - game-network
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5005/statistics/health')"]
+      interval: 30s # comprueba el estado cada 30 seg
+      timeout: 5s # da como máximo 5 seg para la respuesta
+      retries: 3  # se marca el contenedor no saludable después de 3 fallos seguidos
+      start_period: 15s # da 15seg para arrancar sin contabilizar fallos
 
 
 

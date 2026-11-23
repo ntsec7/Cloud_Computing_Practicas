@@ -9,6 +9,12 @@ from app.services import (
 
 statistics_bp = Blueprint( 'statistics', __name__, url_prefix='/statistics')
 
+@statistics_bp.route('/health', methods=['GET'])
+def health():
+    return jsonify({
+        'message': 'Microservicio de statistic funcionando'
+    }), 200
+
 # Devuelve el id y rol del usuario
 def get_request_user():
 

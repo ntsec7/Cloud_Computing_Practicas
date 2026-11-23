@@ -15,6 +15,12 @@ from app.services import (
 
 game_bp = Blueprint( 'game', __name__, url_prefix='/game')
 
+@game_bp.route('/health', methods=['GET'])
+def health():
+    return jsonify({
+        'message': 'Microservicio de statistic funcionando'
+    }), 200
+
 # Comprobar que la petición viene de un microservicio autorizado
 @game_bp.before_request
 def verify_internal_token():
