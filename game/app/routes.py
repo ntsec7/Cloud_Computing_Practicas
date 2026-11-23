@@ -1,13 +1,37 @@
 
 from flask import Blueprint, jsonify, request
+import os
+import hmac
 
 from app.services import (
     get_authenticated_user,
     create_game,
-    save_response
+    save_response,
+    get_game_for_statistics,
+    get_game_responses_for_statistics,
+    get_user_responses_for_statistics
 )
 
 game_bp = Blueprint( 'game', __name__, url_prefix='/game')
+
+# Comprobar que la petición viene de un microservicio autorizado
+@game_bp.before_request
+def verify_internal_token():
+
+    # Las rutas públicas no necesitan autenticación interna
+    if not request.path.startswith('/game/internal/'):
+        return None
+
+    received_token = request.headers.get('X-Internal-Token', '')
+    expected_token = os.getenv('INTERNAL_SERVICE_TOKEN', '')
+
+    if not expected_token or not hmac.compare_digest(
+        received_token,
+        expected_token
+    ):
+        return jsonify({
+            'error': 'Petición no autorizada'
+        }), 403
 
 def get_user_from_request():
 
@@ -128,3 +152,59 @@ def answer_question(game_id):
         return jsonify({'error': error}), 400
 
     return jsonify(result), 200
+
+# Recuperar los datos de una partida para estadísticas
+@game_bp.route('/internal/games/<game_id>', methods=['GET'])
+def get_internal_game(game_id):
+
+    game, error = get_game_for_statistics(game_id)
+
+    if error:
+        if error == 'La partida no existe':
+            return jsonify({'error': error}), 404
+
+        return jsonify({'error': error}), 500
+
+    return jsonify(game), 200
+
+
+# Recuperar las respuestas de una partida para estadísticas
+@game_bp.route('/internal/games/<game_id>/responses', methods=['GET'])
+def get_internal_game_responses(game_id):
+
+    # Recuperar la partida para obtener el user_id
+    game, error = get_game_for_statistics(game_id)
+
+    if error:
+        if error == 'La partida no existe':
+            return jsonify({'error': error}), 404
+
+        return jsonify({'error': error}), 500
+
+    # Recuperar las respuestas de esa partida
+    responses, error = get_game_responses_for_statistics(
+        game_id,
+        game['user_id']
+    )
+
+    if error:
+        return jsonify({'error': error}), 500
+
+    return jsonify({
+        'game_id': game_id,
+        'responses': responses
+    }), 200
+
+# Recuperar todas las respuestas de un usuario para estadísticas
+@game_bp.route('/internal/users/<user_id>/responses', methods=['GET'])
+def get_internal_user_responses(user_id):
+
+    responses, error = get_user_responses_for_statistics(user_id)
+
+    if error:
+        return jsonify({'error': error}), 500
+
+    return jsonify({
+        'user_id': user_id,
+        'responses': responses
+    }), 200

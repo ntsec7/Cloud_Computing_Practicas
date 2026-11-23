@@ -6,6 +6,7 @@ import html
 import uuid # genera los ids
 import random # permite mezclar las respuestas de una pregunta
 from datetime import datetime, timezone # para guardar cuando comenzo una partida
+from boto3.dynamodb.conditions import Key
 
 from dotenv import load_dotenv
 from botocore.exceptions import ClientError
@@ -385,3 +386,113 @@ def save_response(game_id, user_id, question_id, answer):
     return result, None # si no quedan preguntas responde result sin next_question
 
 
+# FUNCIONES PARA LAS ESTADÍSTICAS
+
+# Devuelve la información de una partida
+def get_game_for_statistics(game_id):
+
+    try:
+        response=games_table.get_item(
+            Key={
+                'game_id':game_id
+            },
+            ConsistentRead=True # Devuelve el valor más actualizado
+        )
+
+        game= response.get('Item')
+
+        #Comprobar si existe la partida
+        if not game:
+            return None, 'La partida no existe'
+
+        # Devolver únicamente los datos necesarios para las estadísticas
+        game_data = {
+            'game_id': game['game_id'],
+            'user_id': game['user_id'],
+            'category': game.get('category'),
+            'difficulty': game.get('difficulty')
+        }
+
+        return game_data, None
+
+    except ClientError:
+        return None, 'Error al consultar la partida'
+
+
+# Devuelve las respuestas de una partida
+def get_game_responses_for_statistics(game_id, user_id):
+
+    try:
+        response= responses_table.query(
+            KeyConditionExpression=(
+                Key('user_id').eq(user_id) &
+                Key('response_id').begins_with(f'{game_id}#') #con begins_with filtramos por el game_id
+            ),
+            ProjectionExpression=(
+                'game_id, question_id, is_correct, response_time_ms'
+            )
+        )
+
+        responses= response.get('Items', []) # Devuelve como máximo 1MB por petición. Si existen más resultados, devuelve una clave llamada LastEvaluatedKey que indica dónde debe continuar la siguiente consulta
+
+        # Recuperar los siguientes resultados si DynamoDB los pagina
+        while 'LastEvaluatedKey' in response:
+
+            response = responses_table.query(
+                KeyConditionExpression=(
+                    Key('user_id').eq(user_id) &
+                    Key('response_id').begins_with(f'{game_id}#')
+                ),
+                ProjectionExpression=(
+                    'game_id, question_id, is_correct, response_time_ms'
+                ),
+                ExclusiveStartKey= response['LastEvaluatedKey'] # que empiece a partir de LastEvaluatedKey
+            )
+
+            responses.extend(response.get('Items', []))
+
+        # Convertir los tiempos a enteros
+        for item in responses:
+            item['response_time_ms'] = int(item['response_time_ms'])
+
+
+        return responses, None
+
+    except ClientError:
+        return None, 'Error al consultar las respuestas de la partida'
+
+
+# Recuperar todas las respuestas de un jugador para las estadísticas globales
+def get_user_responses_for_statistics(user_id):
+
+    try:
+        response= responses_table.query(
+            KeyConditionExpression=Key('user_id').eq(user_id),
+            ProjectionExpression=(
+                'game_id, question_id, is_correct, response_time_ms'
+            )            
+        )
+
+        responses = response.get('Items', [])
+
+        # Recuperar las siguientes páginas si existen más resultados
+        while 'LastEvaluatedKey' in response:
+
+            response = responses_table.query(
+                KeyConditionExpression=Key('user_id').eq(user_id),
+                ProjectionExpression=(
+                    'game_id, question_id, is_correct, response_time_ms'
+                ),
+                ExclusiveStartKey=response['LastEvaluatedKey']
+            )
+
+            responses.extend(response.get('Items', []))
+
+        # Convertir los tiempos a enteros
+        for item in responses:
+            item['response_time_ms'] = int(item['response_time_ms'])
+
+        return responses, None
+
+    except ClientError:
+        return None, 'Error al consultar las respuestas del jugador'

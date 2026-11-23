@@ -86,6 +86,26 @@ services:
     networks:
       - game-network
 
+  # Microservicio de estadísticas
+  statistics:
+    build:
+      context: ./statistics
+      dockerfile: Dockerfile
+
+    env_file:
+      - ./statistics/.env
+
+    ports:
+      - "5005:5005"
+
+    depends_on:
+      - profile
+      - game
+
+    networks:
+      - profile-network
+      - game-network
+
 
 
 #REDES DE COMUNICACIÓN ENTRE LOS CONTENEDORES
