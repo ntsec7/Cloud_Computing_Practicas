@@ -45,12 +45,34 @@ La construcción multietapa contribuye a:
 Las imágenes se construyen utilizando como contexto el directorio de
 cada servicio y su correspondiente Dockerfile.
 
-  Microservicio     Puerto de la aplicación Dockerfile
-  --------------- ------------------------- -------------------------
-  Login                                5003 `login/Dockerfile`
-  Profile                              5002 `profile/Dockerfile`
-  Game                                 5004 `game/Dockerfile`
-  Statistics                           5005 `statistics/Dockerfile`
+| Microservicio | Puerto de la aplicación | Dockerfile |
+| --- | --- | --- |
+| Profile | 5002 | `profile/Dockerfile` |
+| Login | 5003 | `login/Dockerfile` |
+| Game | 5004 | `game/Dockerfile` |
+| Statistics | 5005 | `statistics/Dockerfile` |
+
+![Paquetes publicados](../img/hito2/GHCR.png)
+
+### 2.2. Elección de la imagen base de Python
+Para los microservicios desarrollados en Python se ha elegido la imagen
+`python:3.12-slim` como imagen base. La etiqueta `3.12` fija la versión
+principal y secundaria del intérprete utilizada por la aplicación, lo
+que ayuda a mantener un entorno coherente entre el desarrollo, las
+pruebas y la ejecución en contenedores.
+
+La variante `slim` se basa en una distribución Debian reducida y
+contiene menos paquetes que la imagen estándar de Python. Por ello,
+permite partir de una imagen de menor tamaño y evita incorporar
+herramientas y componentes que no son necesarios para ejecutar los
+microservicios. Esta elección contribuye a reducir el tamaño de las
+imágenes y la cantidad de componentes incluidos en ellas, manteniendo
+una base compatible con las dependencias habituales de Python.
+
+No se considera que `slim` sea necesariamente la imagen más pequeña en
+todos los casos, sino una alternativa ligera y práctica para este
+proyecto, en la que se prioriza el equilibrio entre tamaño y
+compatibilidad.
 
 ## 3. Entorno local con Docker Compose
 
@@ -67,14 +89,14 @@ que ejecutar cada contenedor manualmente.
 El entorno local está compuesto por los cuatro microservicios y dos
 instancias de DynamoDB Local.
 
-  Servicio       Función                      Puerto publicado en el equipo anfitrión
-  -------------- -------------------------- -----------------------------------------
-  `login`        Autenticación                                                   5003
-  `profile`      Gestión de perfiles                                             5002
-  `game`         Gestión de partidas                                             5004
-  `statistics`   Consulta de estadísticas                                        5005
-  `profile-db`   Persistencia de perfiles                                        8002
-  `game-db`      Persistencia de partidas                                        8004
+| Servicio | Función | Puerto publicado en el equipo anfitrión |
+| --- | --- | --- |
+| `login` | Autenticación | 5003 |
+| `profile` | Gestión de perfiles | 5002 |
+| `game` | Gestión de partidas | 5004 |
+| `statistics` | Consulta de estadísticas | 5005 |
+| `profile-db` | Persistencia de perfiles | 8002 |
+| `game-db` | Persistencia de partidas | 8004 |
 
 Los puertos publicados permiten acceder a los servicios desde el equipo
 anfitrión. Para la comunicación entre contenedores se utilizan los
@@ -85,7 +107,35 @@ Las bases de datos emplean DynamoDB Local, lo que permite desarrollar y
 probar la aplicación sin depender de una instancia de DynamoDB
 desplegada en AWS.
 
-### 3.2. Configuración mediante variables de entorno
+### 3.2. Elección de DynamoDB Local y servicios de AWS
+
+Se ha elegido la imagen `amazon/dynamodb-local` para las bases de datos
+del entorno de desarrollo. DynamoDB Local proporciona una implementación
+local compatible con la API de Amazon DynamoDB, por lo que permite
+realizar pruebas y desarrollar utilizando el mismo modelo de acceso a
+datos que se empleará al desplegar la aplicación en AWS.
+
+Esta elección facilita la transición entre el entorno local y el entorno
+de despliegue, reduce la dependencia de recursos cloud durante el
+ desarrollo y permite probar las operaciones de persistencia sin
+necesidad de utilizar una tabla alojada en AWS. DynamoDB Local se utiliza
+como entorno de desarrollo y pruebas; en el despliegue, la aplicación
+podrá conectarse al servicio gestionado Amazon DynamoDB.
+
+Para la autenticación se utiliza **Amazon Cognito**, un servicio
+ gestionado de AWS para la gestión de usuarios y autenticación. Se ha
+elegido por su integración con el ecosistema de AWS y porque permite
+apoyarse en un servicio especializado para gestionar la identidad de los
+usuarios, en lugar de implementar y mantener todo el mecanismo de
+autenticación dentro de la aplicación. Esta integración resulta adecuada
+para la arquitectura prevista, que se desplegará en AWS.
+
+Cognito es un servicio cloud externo y no una de las bases de datos
+locales levantadas por Docker Compose. Los microservicios se configuran
+para comunicarse con él mediante los parámetros y credenciales
+correspondientes, que deben mantenerse fuera del código fuente.
+
+### 3.3. Configuración mediante variables de entorno
 
 La configuración de los microservicios se realiza mediante variables de
 entorno. Docker Compose carga los archivos `.env` específicos de cada
@@ -96,7 +146,7 @@ Esta configuración permite separar los parámetros de ejecución del
 código fuente. Los archivos que contienen valores sensibles o
 credenciales locales no deben incluirse en el repositorio.
 
-### 3.3. Redes
+### 3.4. Redes
 
 Se han definido dos redes de tipo *bridge*:
 
@@ -109,7 +159,7 @@ Los servicios se conectan únicamente a las redes que necesitan. Esta
 separación organiza la comunicación interna y evita conectar
 indiscriminadamente todos los contenedores a una única red.
 
-### 3.4. Persistencia de los datos
+### 3.5. Persistencia de los datos
 
 Para conservar los datos de DynamoDB Local se utilizan volúmenes Docker:
 
@@ -132,7 +182,7 @@ docker compose down
 No se debe utilizar `docker compose down -v` cuando se quiera conservar
 la información de los volúmenes.
 
-### 3.5. Healthchecks y dependencias
+### 3.6. Healthchecks y dependencias
 
 Se han incorporado *healthchecks* a los cuatro microservicios y a las
 dos instancias de DynamoDB Local.
@@ -163,6 +213,8 @@ El flujo se ejecuta ante eventos de `push` y `pull_request` dirigidos a
 la rama configurada en el workflow. Su finalidad es detectar problemas
 de forma automática antes de integrar cambios y mantener un proceso
 reproducible de validación y construcción.
+
+![Ejecución correcta del workflow en GitHub Actions](../img/hito2/GitHubActions.png)
 
 ### 4.1. Ejecución de pruebas
 
@@ -259,8 +311,10 @@ Para consultar el estado de los contenedores se utiliza:
 docker compose ps
 ```
 
-La salida permite comprobar qué servicios están ejecutándose y, cuando
+La salida permite comprobar qué servicios están ejecutándose y, dado que
 tienen configurado un healthcheck, si se encuentran saludables.
+
+![Contenedores ejecutándose con estados saludables](../img/hito2/DockerCompose.png)
 
 También se puede consultar el estado de un servicio concreto o revisar
 sus registros mediante:
