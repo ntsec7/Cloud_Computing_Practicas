@@ -2,10 +2,10 @@ from flask import Blueprint, jsonify, request
 
 from app.services import (
     authenticate_user,
+    check_user_exists,
     get_game_owner,
     get_game_statistics,
     get_general_statistics,
-    check_user_exists
 )
 
 statistics_bp = Blueprint( 'statistics', __name__, url_prefix='/statistics')

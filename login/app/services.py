@@ -327,7 +327,7 @@ def delete_account(access_token):
     )
 
     # Eliminar las partidas y respuestas del usuario en game
-    game_result = delete_game_data(user_id)
+    delete_game_data(user_id)
 
     #Guardamos los datos del perfil por si la eliminación en Cognito falla
     profile_response= requests.get(
@@ -750,7 +750,7 @@ def delete_admin_user(access_token, target_user_id):
         return False
 
     # Eliminar las partidas y respuestas del usuario en game
-    game_result = delete_game_data(target_user_id)
+    delete_game_data(target_user_id)
 
     # Eliminar el perfil de DynamoDB.
     delete_response = requests.delete(

@@ -573,5 +573,5 @@ def delete_user_game_data(user_id):
             'deleted_responses': deleted_responses
         }, None
 
-    except Exception as error:
+    except Exception as error: # noqa: BLE001
         return None, error

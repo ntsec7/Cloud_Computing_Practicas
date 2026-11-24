@@ -6,12 +6,12 @@ from flask import Blueprint, jsonify, request
 
 from app.services import (
     create_game,
+    delete_user_game_data,
     get_authenticated_user,
     get_game_for_statistics,
     get_game_responses_for_statistics,
     get_user_responses_for_statistics,
     save_response,
-    delete_user_game_data
 )
 
 game_bp = Blueprint( 'game', __name__, url_prefix='/game')
