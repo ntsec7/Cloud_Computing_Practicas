@@ -364,10 +364,11 @@ def test_logout_user_success(mock_cognito):
 # DELETE ACCOUNT
 # --------------------------------------------------
 
+@patch("app.services.delete_game_data")
 @patch("app.services.requests.delete")
 @patch("app.services.requests.get")
 @patch("app.services.cognito")
-def test_delete_account_success(mock_cognito, mock_get, mock_delete):
+def test_delete_account_success(mock_cognito, mock_get, mock_delete, mock_delete_game_data):
     mock_cognito.get_user.return_value = make_cognito_user()
 
     mock_get.return_value = make_profile_response({
@@ -379,29 +380,43 @@ def test_delete_account_success(mock_cognito, mock_get, mock_delete):
 
     mock_delete.return_value = make_profile_response({})
 
+    mock_delete_game_data.return_value = {
+        "deleted_games": 1,
+        "deleted_responses": 3
+    }
+
     delete_account("access")
 
     mock_delete.assert_called_once()
     mock_cognito.admin_delete_user.assert_called_once()
+    mock_delete_game_data.assert_called_once_with("user123")
 
 
+@patch("app.services.delete_game_data")
 @patch("app.services.requests.get")
 @patch("app.services.cognito")
-def test_delete_account_without_profile(mock_cognito, mock_get):
+def test_delete_account_without_profile(mock_cognito, mock_get, mock_delete_game_data):
     mock_cognito.get_user.return_value = make_cognito_user()
     mock_get.return_value = make_profile_response({}, 404)
+
+    mock_delete_game_data.return_value = {
+        "deleted_games": 1,
+        "deleted_responses": 3
+    }
 
     delete_account("access")
 
     mock_cognito.admin_delete_user.assert_called_once()
+    mock_delete_game_data.assert_called_once_with("user123")
 
 
+@patch("app.services.delete_game_data")
 @patch("app.services.requests.post")
 @patch("app.services.requests.delete")
 @patch("app.services.requests.get")
 @patch("app.services.cognito")
 def test_delete_account_restores_profile_if_cognito_fails(
-    mock_cognito, mock_get, mock_delete, mock_post
+    mock_cognito, mock_get, mock_delete, mock_post, mock_delete_game_data
 ):
     profile = {
         "user_id": "user123",
@@ -415,11 +430,16 @@ def test_delete_account_restores_profile_if_cognito_fails(
     mock_delete.return_value = make_profile_response({})
     mock_cognito.admin_delete_user.side_effect = make_client_error()
     mock_post.return_value = make_profile_response({})
+    mock_delete_game_data.return_value = {
+        "deleted_games": 1,
+        "deleted_responses": 3
+    }
 
     with pytest.raises(ClientError):
         delete_account("access")
 
     mock_post.assert_called_once()
+    mock_delete_game_data.assert_called_once_with("user123")
 
 
 # --------------------------------------------------
@@ -632,10 +652,11 @@ def test_change_admin_user_password_not_admin(mock_cognito):
 # ADMIN: DELETE USER
 # --------------------------------------------------
 
+@patch("app.services.delete_game_data")
 @patch("app.services.requests.delete")
 @patch("app.services.requests.get")
 @patch("app.services.cognito")
-def test_delete_admin_user_success(mock_cognito, mock_get, mock_delete):
+def test_delete_admin_user_success(mock_cognito, mock_get, mock_delete, mock_delete_game_data):
     mock_cognito.get_user.return_value = make_cognito_user("admin123")
 
     profile = {
@@ -661,11 +682,17 @@ def test_delete_admin_user_success(mock_cognito, mock_get, mock_delete):
 
     mock_delete.return_value = make_profile_response({})
 
+    mock_delete_game_data.return_value = {
+        "deleted_games": 1,
+        "deleted_responses": 3
+    }
+
     result = delete_admin_user("admin-token", "user123")
 
     assert result is True
     mock_delete.assert_called_once()
     mock_cognito.admin_delete_user.assert_called_once()
+    mock_delete_game_data.assert_called_once_with("user123")
 
 
 @patch("app.services.cognito")
