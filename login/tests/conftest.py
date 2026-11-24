@@ -8,6 +8,7 @@ os.environ.setdefault("COGNITO_CLIENT_ID", "test-client")
 os.environ.setdefault("COGNITO_CLIENT_SECRET", "test-secret")
 os.environ.setdefault("PROFILE_SERVICE_URL", "http://profile:5002")
 os.environ.setdefault("INTERNAL_SERVICE_TOKEN", "test-internal-token")
+os.environ.setdefault("GAME_SERVICE_URL", "http://localhost:5004")
 
 os.environ.setdefault("AWS_ACCESS_KEY_ID", "test")
 os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "test")
