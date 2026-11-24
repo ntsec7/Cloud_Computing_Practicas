@@ -16,6 +16,7 @@ CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
 CLIENT_SECRET = os.getenv("COGNITO_CLIENT_SECRET")
 PROFILE_SERVICE_URL = os.getenv("PROFILE_SERVICE_URL")
 INTERNAL_SERVICE_TOKEN = os.getenv("INTERNAL_SERVICE_TOKEN")
+GAME_SERVICE_URL = os.getenv("GAME_SERVICE_URL")
 
 
 # Comprobar que existen las variables necesarias
@@ -25,6 +26,7 @@ required_variables= {
     "COGNITO_CLIENT_ID": CLIENT_ID,
     "COGNITO_CLIENT_SECRET": CLIENT_SECRET,
     "PROFILE_SERVICE_URL": PROFILE_SERVICE_URL,
+    "GAME_SERVICE_URL": GAME_SERVICE_URL,
     "INTERNAL_SERVICE_TOKEN": INTERNAL_SERVICE_TOKEN
 }
 
@@ -39,6 +41,10 @@ if missing_variables:
     )
 
 PROFILE_HEADERS = {
+    "X-Internal-Token": INTERNAL_SERVICE_TOKEN
+}
+
+GAME_HEADERS = {
     "X-Internal-Token": INTERNAL_SERVICE_TOKEN
 }
 
@@ -284,6 +290,25 @@ def logout_user(access_token):
         AccessToken= access_token
     )
 
+def delete_game_data(user_id):
+    """Solicita al microservicio game que elimine los datos del usuario."""
+
+    response = requests.delete(
+        f"{GAME_SERVICE_URL}/game/internal/users/{user_id}",
+        headers=GAME_HEADERS,
+        timeout=30
+    )
+
+    response.raise_for_status()
+
+    result = response.json()
+
+    if not isinstance(result, dict) or "deleted_games" not in result or "deleted_responses" not in result:
+        raise RuntimeError(
+            "El microservicio game devolvió una respuesta no válida"
+        )
+
+    return result
 
 def delete_account(access_token):        
     """Elimina la cuenta de Cognito y su perfil."""
@@ -300,6 +325,9 @@ def delete_account(access_token):
         for attribute in user["UserAttributes"]
         if attribute["Name"] =="sub"
     )
+
+    # Eliminar las partidas y respuestas del usuario en game
+    game_result = delete_game_data(user_id)
 
     #Guardamos los datos del perfil por si la eliminación en Cognito falla
     profile_response= requests.get(
@@ -720,6 +748,9 @@ def delete_admin_user(access_token, target_user_id):
 
     if cognito_username is None:
         return False
+
+    # Eliminar las partidas y respuestas del usuario en game
+    game_result = delete_game_data(target_user_id)
 
     # Eliminar el perfil de DynamoDB.
     delete_response = requests.delete(

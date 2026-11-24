@@ -11,6 +11,7 @@ from app.services import (
     get_game_responses_for_statistics,
     get_user_responses_for_statistics,
     save_response,
+    delete_user_game_data
 )
 
 game_bp = Blueprint( 'game', __name__, url_prefix='/game')
@@ -214,4 +215,24 @@ def get_internal_user_responses(user_id):
     return jsonify({
         'user_id': user_id,
         'responses': responses
+    }), 200
+
+
+# Borrar las partidas de un usuario
+@game_bp.route('/internal/users/<user_id>', methods=['DELETE'])
+def delete_internal_user_data(user_id):
+    """Elimina las partidas y respuestas de un usuario."""
+
+    result, error = delete_user_game_data(user_id)
+
+    if error:
+        return jsonify({
+            'error': 'No se pudieron eliminar los datos del usuario'
+        }), 500
+
+    return jsonify({
+        'message': 'Datos del usuario eliminados correctamente',
+        'user_id': user_id,
+        'deleted_games': result['deleted_games'],
+        'deleted_responses': result['deleted_responses']
     }), 200
