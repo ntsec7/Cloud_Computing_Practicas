@@ -182,6 +182,53 @@ docker compose down
 No se debe utilizar `docker compose down -v` cuando se quiera conservar
 la información de los volúmenes.
 
+`profile-db-data` cuenta con la tabla de datos `Profile` con esta estructura:
+
+| Atributo | Tipo | Función | Descripción |
+| :--- | :--- | :--- | :--- |
+| `user_id` | String (`S`) | Clave de partición (PK) | Identificador único del usuario, obtenido de Cognito. |
+| `username` | String (`S`) | Atributo | Nombre de usuario de la cuenta. |
+| `name` | String (`S`) | Atributo | Nombre del usuario. |
+| `avatar_id` | String (`S`) | Atributo | Identificador del avatar seleccionado. |
+| `role` | String (`S`) | Atributo | Rol del usuario, puede tomar los valores `client` o `admin`. |
+
+Por su parte, `game-db-data` posee las siguientes tablas:
+
+### Tabla `Games`
+
+| Atributo | Tipo | Función | Descripción |
+| :--- | :--- | :--- | :--- |
+| `game_id` | String (`S`) | Clave de partición (PK) | Identificador único de la partida. |
+| `user_id` | String (`S`) | PK del GSI (`UserIdIndex`) | Identificador del usuario que ha creado la partida. |
+| `category` | Number (`N`) | Atributo | Categoría de las preguntas, identificada mediante el código numérico de OpenTDB o `None` para que sea aleatorio. |
+| `difficulty` | String (`S`) | Atributo | Nivel de dificultad de la partida, puede valer `easy`, `medium`, `hard` o `None`. |
+| `questions` | List (`L`) | Atributo | Lista de preguntas que componen la partida, incluyendo sus datos y respuestas posibles. |
+| `current_question_index` | Number (`N`) | Atributo | Índice de la pregunta actual dentro de la partida. |
+| `current_question_started_at` | String (`S`) | Atributo | Fecha y hora en la que comenzó la pregunta actual, utilizada para calcular el tiempo de respuesta. |
+*(Nota: Esta tabla no utiliza clave de ordenación).*
+
+#### Índice secundario global: `UserIdIndex`
+
+| Parámetro | Valor |
+| :--- | :--- |
+| **Nombre** | `UserIdIndex` |
+| **Clave de partición (PK)** | `user_id` |
+| **Clave de ordenación (SK)** | No tiene |
+| **Proyección** | `ALL` |
+
+---
+
+### Tabla `GameResponses`
+
+| Atributo | Tipo | Función | Descripción |
+| :--- | :--- | :--- | :--- |
+| `user_id` | String (`S`) | Clave de partición (PK) | Identificador del usuario que ha respondido. |
+| `response_id` | String (`S`) | Clave de ordenación (SK) | Identificador compuesto por `game_id#question_id`, que permite identificar la respuesta dentro de una partida. |
+| `game_id` | String (`S`) | Atributo | Identificador de la partida a la que pertenece la respuesta. |
+| `question_id` | String (`S`) | Atributo | Identificador de la pregunta respondida. |
+| `is_correct` | Boolean (`BOOL`) | Atributo | Indica si la respuesta del usuario ha sido correcta. |
+| `response_time_ms` | Number (`N`) | Atributo | Tiempo empleado en responder, expresado en milisegundos. |
+
 ### 3.6. Healthchecks y dependencias
 
 Se han incorporado *healthchecks* a los cuatro microservicios y a las
