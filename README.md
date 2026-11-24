@@ -30,6 +30,8 @@ El sistema está formado por 4 microservicios distintos: logueo, perfil, juego y
 ## Entrega de los Hitos
 ### Hito 1
 El código está disponible en la rama [`hito/1`](../../tree/hito/1) y su documentación en [Documentación Hito 1](./docs/Hito1.md)
+### Hito 2
+El código está disponible en la rama [`hito/2`](../../tree/hito/2) y su documentación en [Documentación Hito 2](./docs/Hito2.md)
 
 
 
