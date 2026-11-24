@@ -5,6 +5,7 @@ from app.services import (
     get_game_owner,
     get_game_statistics,
     get_general_statistics,
+    check_user_exists
 )
 
 statistics_bp = Blueprint( 'statistics', __name__, url_prefix='/statistics')
@@ -86,6 +87,17 @@ def general_statistics(user_id):
         return jsonify({
             'error': 'No tienes permiso para consultar estas estadísticas'
         }), 403
+
+    # Comprobar que el usuario objetivo existe
+    exists, error = check_user_exists(user_id)
+
+    if error:
+        return jsonify({'error': error}), 502
+
+    if not exists:
+        return jsonify({
+            'error': 'El usuario no existe'
+        }), 404
 
     # Calcular las estadísticas generales
     statistics, error = get_general_statistics(user_id)

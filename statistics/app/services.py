@@ -75,6 +75,29 @@ def get_user_role(user_id):
     except ValueError:
         return None, 'La respuesta de profile no contiene un JSON válido'
 
+# Comprobamos si el usuario existe
+def check_user_exists(user_id):
+    """Comprueba si existe el perfil de un usuario."""
+
+    try:
+        response = requests.get(
+            f'{PROFILE_SERVICE_URL}/profile/{user_id}',
+            headers=PROFILE_HEADERS,
+            timeout=5
+        )
+
+        if response.status_code == 404:
+            return False, None
+
+        response.raise_for_status()
+
+        return True, None
+
+    except requests.exceptions.RequestException:
+        return None, 'Error al consultar el perfil del usuario'
+
+    except ValueError:
+        return None, 'La respuesta de profile no contiene un JSON válido'
 
 # Devuelve el id y rol del usuario
 def authenticate_user(access_token):

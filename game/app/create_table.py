@@ -22,6 +22,24 @@ try:
             {
                 'AttributeName' : 'game_id',
                 'AttributeType' : 'S'   #tipo String
+            },
+            {
+                'AttributeName': 'user_id',
+                'AttributeType': 'S'
+            }
+        ],
+        GlobalSecondaryIndexes=[
+            {
+                'IndexName': 'UserIdIndex',
+                'KeySchema': [
+                    {
+                        'AttributeName': 'user_id',
+                        'KeyType': 'HASH'
+                    }
+                ],
+                'Projection': {
+                    'ProjectionType': 'ALL'
+                }
             }
         ],
         BillingMode= 'PAY_PER_REQUEST'  #Se adapta automáticamente a las peticiones de lectura-escritura (no pagamos porque es local)

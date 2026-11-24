@@ -496,3 +496,82 @@ def get_user_responses_for_statistics(user_id):
 
     except ClientError:
         return None, 'Error al consultar las respuestas del jugador'
+
+
+def delete_user_game_data(user_id):
+    """Elimina todas las partidas y respuestas de un usuario."""
+
+    try:
+        # 1. Eliminar las respuestas del usuario
+        deleted_responses = 0
+
+        last_evaluated_key = None
+
+        while True:
+            query_params = {
+                'KeyConditionExpression': Key('user_id').eq(user_id),
+                'ProjectionExpression': 'user_id, response_id'
+            }
+
+            # Continuar desde la última página, si existe
+            if last_evaluated_key:
+                query_params['ExclusiveStartKey'] = last_evaluated_key
+
+            response = responses_table.query(**query_params)
+
+            # Eliminar las respuestas recuperadas
+            with responses_table.batch_writer() as batch:
+                for item in response['Items']:
+                    batch.delete_item(
+                        Key={
+                            'user_id': item['user_id'],
+                            'response_id': item['response_id']
+                        }
+                    )
+                    deleted_responses += 1
+
+            last_evaluated_key = response.get('LastEvaluatedKey')
+
+            if not last_evaluated_key:
+                break
+
+        # 2. Eliminar las partidas del usuario
+        deleted_games = 0
+
+        last_evaluated_key = None
+
+        while True:
+            query_params = {
+                'IndexName': 'UserIdIndex',
+                'KeyConditionExpression': Key('user_id').eq(user_id),
+                'ProjectionExpression': 'game_id'
+            }
+
+            # Continuar desde la última página, si existe
+            if last_evaluated_key:
+                query_params['ExclusiveStartKey'] = last_evaluated_key
+
+            response = games_table.query(**query_params)
+
+            # Eliminar las partidas recuperadas
+            with games_table.batch_writer() as batch:
+                for item in response['Items']:
+                    batch.delete_item(
+                        Key={
+                            'game_id': item['game_id']
+                        }
+                    )
+                    deleted_games += 1
+
+            last_evaluated_key = response.get('LastEvaluatedKey')
+
+            if not last_evaluated_key:
+                break
+
+        return {
+            'deleted_games': deleted_games,
+            'deleted_responses': deleted_responses
+        }, None
+
+    except Exception as error:
+        return None, error
