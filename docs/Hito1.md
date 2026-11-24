@@ -78,6 +78,7 @@ A continuación, se expone una documentación sintética de los endpoints princi
 | GET | `/game/internal/games/<game_id>` | — *(Requiere X-Internal-Token)* | Recuperar los datos de una partida para estadísticas |
 | GET | `/game/internal/games/<game_id>/responses` | — *(Requiere X-Internal-Token)* | Recuperar las respuestas de una partida para estadísticas |
 | GET | `/game/internal/users/<user_id>/responses` | — *(Requiere X-Internal-Token)* | Recuperar todas las respuestas de un usuario para estadísticas |
+| DELETE | `game/internal/users/<user_id>` | — *(Requiere X-Internal-Token)* | Eliminar todos los datos de partidas y respuestas de un usuario |
 
 <ins>Statistics</ins>
 | Método | Ruta | Payload JSON | Descripción |
